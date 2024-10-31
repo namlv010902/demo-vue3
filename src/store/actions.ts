@@ -1,6 +1,6 @@
-import instance from '@/api/config';
-import Cookies from 'js-cookie';
-import { toast } from 'vue3-toastify';
+import { request } from "@/api/config";
+import Cookies from "js-cookie";
+import { toast } from "vue3-toastify";
 
 interface IPayload {
   email: string;
@@ -16,52 +16,42 @@ interface IResponse {
 }
 
 export default {
-  async login({ commit }: { commit: Function }, payload: IPayload): Promise<boolean> {
+  async login({ commit }: { commit: Function }, payload: IPayload) {
     try {
-      const { data } = await instance.post<IResponse>('/auth/login', payload);
+      const { data } = await request.post<IResponse>("/auth/login", payload);
 
       if (data && data.data) {
         const { accessToken, user, refreshToken } = data.data;
 
         // Commit user data and tokens to the Vuex store
-        commit('setUser', user);
-        commit('setToken', accessToken);
+        commit("setUser", user);
+        commit("setToken", accessToken);
 
         // Save tokens to cookies
-        Cookies.set('accessToken', accessToken);
-        Cookies.set('refreshToken', refreshToken);
-
-        return true; 
+        Cookies.set("accessToken", accessToken);
+        Cookies.set("refreshToken", refreshToken);
+        request.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+        return true;
       } else {
-        
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       throw error;
     }
   },
-  
-  async getMe ({commit}){
+
+  async getMe({ commit }) {
     try {
-      const accessToken = Cookies.get('accessToken');
+      const { data } = await request.get<IResponse>("/auth/me");
 
-      if (accessToken) {
-        instance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-        const { data } = await instance.get<IResponse>('/auth/me');
-
-        if (data && data.data) {
-          const { user } = data.data;
-          commit('setUser', user);
-          return true;
-        } else {
-          toast.error('Failed to get user information');
-        }
-      } else {
-        toast.error('Failed to authenticate user');
+      if (data && data.data) {
+        const { user } = data.data;
+        commit("setUser", user);
+        return true;
       }
     } catch (error) {
-      console.error('GetMe error:', error);
+      console.error("GetMe error:", error);
       throw error;
     }
-  }
+  },
 };
