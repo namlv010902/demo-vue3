@@ -1,4 +1,4 @@
-import { request } from "@/api/config";
+import { request } from "@/libs/utils/api/config";
 import Cookies from "js-cookie";
 import { toast } from "vue3-toastify";
 
@@ -23,11 +23,9 @@ export default {
       if (data && data.data) {
         const { accessToken, user, refreshToken } = data.data;
 
-        // Commit user data and tokens to the Vuex store
         commit("setUser", user);
         commit("setToken", accessToken);
 
-        // Save tokens to cookies
         Cookies.set("accessToken", accessToken);
         Cookies.set("refreshToken", refreshToken);
         request.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
@@ -36,6 +34,24 @@ export default {
       }
     } catch (error) {
       console.error("Login error:", error);
+      throw error;
+    }
+  },
+  async register(values){
+    console.log(values);
+    return
+    
+    try {
+      const { data } = await request.post("/auth/register", values);
+
+      if (data && data.data) {
+        toast.success("Register successful!");
+        return true;
+      } else {
+        toast.error("Register failed!");
+      }
+    } catch (error) {
+      console.error("Register error:", error);
       throw error;
     }
   },

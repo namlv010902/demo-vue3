@@ -1,19 +1,18 @@
 import axios, { AxiosError } from "axios";
 import Cookies from "js-cookie";
 import router from "@/router";
+import { Forbidden, Unauthorized } from ".";
 
-const API_URL = "http://localhost:5000/api/";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const request = axios.create({
   baseURL: API_URL,
 });
 
-// Lấy và thiết lập token từ cookie
+// Lấy và thiết lập token từ cookie khi khởi tạo
 function setAuthToken() {
-  
-  const accessToken = Cookies.get('accessToken');
+  const accessToken = Cookies.get("accessToken");
   if (accessToken) {
-    console.log("running...",accessToken);
     request.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
   }
 }
@@ -21,15 +20,22 @@ function setAuthToken() {
 // Hàm làm mới token
 async function refreshToken() {
   try {
-    const refreshToken = Cookies.get('refreshToken');
+    const refreshToken = Cookies.get("refreshToken");
     if (!refreshToken) {
       throw new Error("Refresh token not found");
     }
+
+    // Đặt refresh token tạm thời
     request.defaults.headers.common["Authorization"] = `Bearer ${refreshToken}`;
     const response = await request.post("auth/refreshToken");
     const newAccessToken = response.data.data.accessToken;
+
+    // Lưu token mới vào cookie và cập nhật Authorization header
     Cookies.set("accessToken", newAccessToken);
-    request.defaults.headers.common["Authorization"] = `Bearer ${newAccessToken}`;
+    request.defaults.headers.common[
+      "Authorization"
+    ] = `Bearer ${newAccessToken}`;
+
     return newAccessToken;
   } catch (error) {
     handleTokenError(error);
@@ -37,21 +43,14 @@ async function refreshToken() {
 }
 
 // Hàm xử lý lỗi token
-function handleTokenError(error) {
+function handleTokenError(error: unknown) {
   if (error instanceof AxiosError) {
-    if (error.response?.data?.message === "Refresh token has expired") {
+    if (error.response?.status == Unauthorized) {
       router.push("/auth/login");
     }
     console.error("Error refreshing token:", error);
   }
 }
-
-// Interceptor yêu cầu
-request.interceptors.request.use((config) => {
-  config.headers["X-Request-Timestamp"] = new Date().toISOString();
-  setAuthToken(); // Thiết lập token cho mỗi yêu cầu
-  return config;
-});
 
 // Interceptor phản hồi
 request.interceptors.response.use(
@@ -60,19 +59,26 @@ request.interceptors.response.use(
     const originalRequest = error.config;
 
     // Xử lý trường hợp token hết hạn
-    if (
-      error.response?.data?.message === "Token expired" &&
-      !originalRequest._retry
-    ) {
+    if (error.response?.status == Unauthorized && !originalRequest._retry) {
       originalRequest._retry = true;
-      await refreshToken(); // Làm mới token
-      return request(originalRequest); // Thực hiện lại yêu cầu gốc
+      const newAccessToken = await refreshToken(); // Làm mới token
+
+      // Cập nhật token mới trong headers của originalRequest
+      if (newAccessToken) {
+        originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+      }
+
+      return request(originalRequest); // Thực hiện lại yêu cầu gốc với token mới
     }
 
-    // Xử lý trường hợp không có token
-    if (error.response?.data?.message === "No token provided") {
-      console.log(error.response?.data?.message);
+    // Xử lý trường hợp không có token hoặc lỗi 401
+    if (error.response?.status === Unauthorized) {
       router.push("/auth/login");
+    }
+
+    // Xử lý trường hợp không có token hoặc lỗi 403
+    if (error.response?.status === Forbidden) {
+      router.push("/403");
     }
 
     return Promise.reject(error);
@@ -82,6 +88,4 @@ request.interceptors.response.use(
 // Thiết lập token khi khởi tạo
 setAuthToken();
 
-export {
-  request,
-};
+export { request };

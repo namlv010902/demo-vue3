@@ -4,7 +4,10 @@
     <SideBar :isSidebarOpen="isSidebarOpen" />
 
     <!-- Main content -->
-    <div class="flex flex-col flex-1">
+    <div
+      class="flex flex-col flex-1 transition-all duration-300"
+      :class="{ 'ml-0': isSidebarOpen, 'ml-[-16rem]': !isSidebarOpen }"
+    >
       <!-- Header -->
       <Header :isSidebarOpen="isSidebarOpen" @toggleSidebar="toggleSidebar" />
 
