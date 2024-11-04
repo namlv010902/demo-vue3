@@ -21,9 +21,7 @@ export default {
     },
   },
   methods: {
-    getIconComponent(icon) {
-      console.log(123,icon);
-      
+    getIconComponent(icon) {      
       switch (icon) {
         case 'home':
           return {

@@ -21,22 +21,16 @@ function setAuthToken() {
 async function refreshToken() {
   try {
     const refreshToken = Cookies.get("refreshToken");
-    if (!refreshToken) {
-      throw new Error("Refresh token not found");
-    }
 
-    // Đặt refresh token tạm thời
+    if(refreshToken){
+      // Đặt refresh token tạm thời
     request.defaults.headers.common["Authorization"] = `Bearer ${refreshToken}`;
     const response = await request.post("auth/refreshToken");
     const newAccessToken = response.data.data.accessToken;
-
     // Lưu token mới vào cookie và cập nhật Authorization header
     Cookies.set("accessToken", newAccessToken);
-    request.defaults.headers.common[
-      "Authorization"
-    ] = `Bearer ${newAccessToken}`;
-
     return newAccessToken;
+    }
   } catch (error) {
     handleTokenError(error);
   }

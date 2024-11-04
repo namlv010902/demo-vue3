@@ -35,6 +35,7 @@
           <span v-else>Login</span>
         </button>
         <p v-if="error" class="text-red-500 text-sm mt-4">{{ error }}</p>
+        <router-link to="/auth/register">Register</router-link>
       </form>
     </div>
   </div>
