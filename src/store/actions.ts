@@ -1,4 +1,4 @@
-import { request } from "@/libs/utils/api/config";
+import { instance as request }  from "@/libs/utils/api/instance";
 import Cookies from "js-cookie";
 import { toast } from "vue3-toastify";
 

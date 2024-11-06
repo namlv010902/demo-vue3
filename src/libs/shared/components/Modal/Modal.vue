@@ -3,7 +3,7 @@
     <div
       v-if="isOpen"
       class="fixed inset-0 flex items-center justify-center z-50"
-      @click.self="closeModal"
+      @click="closeModal"
     >
       <!-- Overlay -->
       <div class="absolute inset-0 bg-gray-800 opacity-75"></div>

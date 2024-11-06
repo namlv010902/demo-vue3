@@ -37,11 +37,11 @@
   </div>
 </template>
 
-<script>
+<script >
 import { Form, Field, ErrorMessage } from "vee-validate";
 import * as Yup from "yup";
 import { toast } from "vue3-toastify";
-import { request } from "@/libs/utils/api";
+import { instance } from "@/libs/utils/api";
 import { AxiosError } from "axios";
 import Logo from '../../assets/img/logo.webp'
 
@@ -124,7 +124,7 @@ export default {
       console.log(values);
 
       try {
-        const { data } = await request.post("/auth/register", values);
+        const { data } = await instance.post("/auth/register", values);
 
         if (data && data.data) {
           toast.success("Register successful!");
